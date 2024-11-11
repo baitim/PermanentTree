@@ -6,6 +6,7 @@
 #include <cmath>
 #include <memory>
 #include <vector>
+#include <utility>
 
 namespace perm_tree {
     
@@ -14,7 +15,7 @@ namespace perm_tree {
 
         struct tree_node final {
             KeyT key_;
-            int height_ = 0;
+            int height_ = 1;
             int Nleft_  = 0;
             int Nright_ = 0;
             tree_node* parent_ = nullptr;
@@ -27,10 +28,11 @@ namespace perm_tree {
             }
         };
 
-        struct tree_nodes_buffer_t final {
+        class tree_nodes_buffer_t final {
             std::list<std::unique_ptr<tree_node>> nodes_;
 
-            tree_node* add_node(tree_node node) {
+        public:
+            tree_node* add_node(const tree_node& node) {
                 return (nodes_.emplace_back(std::make_unique<tree_node>(node))).get();
             }
         };
@@ -54,6 +56,8 @@ namespace perm_tree {
                 *this = internal_iterator{node};
                 return *this;
             }
+
+            pointer get_ptr() { return node_; }
 
             bool is_valid() const noexcept { return (node_ != nullptr); }
 
@@ -148,9 +152,11 @@ namespace perm_tree {
         };
 
     private:
+        bool is_detached_ = false;
         tree_nodes_buffer_t buffer_;
         tree_node* root_;
-        KeyT max_key_;
+        std::unique_ptr<tree_node> node_detached_;
+        const KeyT max_key_;
 
     private:
         int get_node_size(internal_iterator node) const noexcept {
@@ -177,6 +183,98 @@ namespace perm_tree {
 
                 node_.height_++;
             }
+        }
+
+        void balance(tree_node* node) {
+            if (!node)
+                return;
+
+            int balance_diff = 0;
+            if (node->left_)
+                balance_diff = node->left_->height_;
+            if (node->right_)
+                balance_diff -= node->right_->height_;
+
+            int left_height = 0;
+            int right_height = 0;
+            if (balance_diff > 1) {
+                tree_node* left = node->left_;
+                if (left->left_)
+                    left_height = left->left_->height_;
+
+                if (left->right_)
+                    right_height = left->right_->height_;
+
+                if (left_height < right_height)
+                    rotate_left(node->left_);
+                rotate_right(node);
+                    
+            } else if (balance_diff < -1) {
+                tree_node* right = node->right_;
+                if (right->left_)
+                    left_height = right->left_->height_;
+
+                if (right->right_)
+                    right_height = right->right_->height_;
+
+                if (left_height > right_height)
+                    rotate_right(node->right_);
+                rotate_left(node);
+            }
+        }
+
+        void rotate_right(tree_node* node) {
+            if (!node)
+                return;
+
+            tree_node* node_left_old = node->left_;
+
+            node->left_ = node->left_->right_;
+            node_left_old->right_ = node;
+
+            if (node == root_) {
+                root_ = node_left_old;
+            } else {
+                if (CompT()(node->key_, node->parent_->key_))
+                    node->parent_->left_  = node_left_old;
+                else
+                    node->parent_->right_ = node_left_old;
+            }
+
+            node_left_old->parent_ = node->parent_;
+            if (node->left_)
+                node->left_->parent_ = node;
+            node->parent_ = node_left_old;
+
+            update_height(node);
+            update_Nchilds(node);
+        }
+
+        void rotate_left(tree_node* node) {
+            if (!node)
+                return;
+
+            tree_node* node_right_old = node->right_;
+
+            node->right_ = node->right_->left_;
+            node_right_old->left_ = node;
+
+            if (node == root_) {
+                root_ = node_right_old;
+            } else {
+                if (CompT()(node->key_, node->parent_->key_))
+                    node->parent_->left_  = node_right_old;
+                else
+                    node->parent_->right_ = node_right_old;
+            }
+
+            node_right_old->parent_ = node->parent_;
+            if (node->right_)
+                node->right_->parent_ = node;
+            node->parent_ = node_right_old;
+            
+            update_height(node);
+            update_Nchilds(node);
         }
 
         std::ostream& print_node(std::ostream& os, internal_iterator node) const noexcept {
@@ -242,6 +340,29 @@ namespace perm_tree {
             return os;
         }
 
+        internal_iterator find(const KeyT& key) const {
+            if (!root_)
+                return 0;
+
+            internal_iterator current = root_;
+            while (current.is_valid()) {
+                if (CompT()(key, current->key_)) {
+                    if (current->left_)
+                        current = current->left_;
+                    else
+                        return current;
+                } else if (CompT()(current->key_, key)) {
+                    if (current->right_)
+                        current = current->right_;
+                    else
+                        return current;
+                } else {
+                    return current;
+                }
+            }
+            return root_;
+        }
+
     public:
         perm_tree_t(const KeyT& max_key) : max_key_(max_key) {}
 
@@ -253,10 +374,17 @@ namespace perm_tree {
                             ":\nkey(<child>, <child>, <parent>, <Nleft>, <Nright>, <height>, <ptr>):\n");
 
             print_subtree(os, root_);
+
+            os << print_lblue("\nDetached: ");
+            if (node_detached_.get())   os << print_lblue(node_detached_.get()->key_ << "\n");
+            else                        os << print_lblue("nothing\n");
+
             return os;
         }
 
         external_iterator insert(const KeyT& key) {
+            attach();
+
             tree_node* new_node = buffer_.add_node(key);
 
             if (!root_) {
@@ -293,11 +421,28 @@ namespace perm_tree {
             update_height (destination);
             update_Nchilds(destination);
 
-            return destination;
+            for (auto& node_ : ascending_range{destination})
+                balance(std::addressof(node_));
+
+            return find(destination->key_);
         }
 
-        void detach_insert(KeyT key) {;}
-        void reset() {;}
+        void detach_insert(const KeyT& key) {
+            attach();
+            is_detached_ = true;
+            node_detached_ = std::make_unique<tree_node>(key);
+        }
+
+        void attach() {
+            if (std::exchange(is_detached_, false)) {
+                insert(node_detached_.get()->key_);
+                reset();
+            }
+        }
+
+        void reset() {
+            node_detached_.reset();
+        }
     };
 
     template <typename KeyT, typename CompT>
