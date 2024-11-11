@@ -1,10 +1,9 @@
-#include "ANSI_colors.hpp"
 #include "perm_tree.hpp"
-#include <iostream>
+#include <cstdint>
 
 int main()
 {
-    perm_tree::perm_tree_t<int> tree;
+    perm_tree::perm_tree_t<int> tree{INT32_MAX};;
 
     char command;
     while(std::cin >> command) {
@@ -18,7 +17,7 @@ int main()
                 std::cin >> key;
                 if (!std::cin.good())
                     return (std::cout << print_red("Error input, need key as int\n"), 1);
-                    
+
                 tree.insert(key);
                 break;
 
@@ -42,7 +41,7 @@ int main()
                 return (std::cout << print_red("Error input, need command: \"k\", \"s\" or \"r\"\n"), 1);
         }
 
-#ifdef DEBUG
+#if 1
         std::cout << tree << "\n";
 #endif
     }
