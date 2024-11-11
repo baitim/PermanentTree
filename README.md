@@ -5,7 +5,7 @@
  Implementation of the permanent tree.
 
 <figure>
-    <p align="center"><img src="https://github.com/PermanentTree/blob/main/images/perm_tree.png" width="80%"></p>
+    <p align="center"><img src="https://github.com/baitim/PermanentTree/blob/main/images/perm_tree.png" width="80%"></p>
     <figcaption><p align="center">updating a permanent tree</p></figcaption>
 </figure>
 
