@@ -152,7 +152,7 @@ namespace perm_tree {
     private:
         bool is_detached_ = false;
         tree_nodes_buffer_t buffer_;
-        tree_node* root_;
+        tree_node* root_ = nullptr;
         std::unique_ptr<tree_node> node_detached_;
 
     private:
