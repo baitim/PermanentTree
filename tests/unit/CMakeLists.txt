@@ -3,11 +3,11 @@ project(unit)
 
 set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
 
-include_directories(${gtest_SOURCE_DIR})
+find_package(GTest REQUIRED)
 
 add_executable(unit_perm_tree perm_tree_unit_test.cpp)
+target_link_libraries(unit_perm_tree gtest::gtest)
 target_include_directories(unit_perm_tree PUBLIC ${INCLUDE_DIR})
-target_link_libraries(unit_perm_tree gtest gtest_main)
 
 set(RUN_TESTS ./unit_perm_tree --gtest_color=yes)
 add_test(

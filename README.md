@@ -17,13 +17,17 @@
 2. Go to folder <br>
     <code>cd PermanentTree</code>
 
-3. Init submodules <br>
-    <code>git submodule update --init --recursive</code>
+3. Prepare conan <br>
+    write <code>conan profile detect --force</code> in terminal
 
-4. Build <br>
-    <code>cmake . -B build ; cmake --build build</code>
+4. Init dependencies <br>
+    write <code>conan install . --build=missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True -s compiler.cppstd=gnu20</code> in terminal <br>
+    maybe you will need these flags for the conan <code>-s build_type=Debug</code>
 
-5. Run <br>
+5. Build <br>
+    <code>cmake . -B build -DCMAKE_TOOLCHAIN_FILE=build/Release/generators/conan_toolchain.cmake; cmake --build build</code>
+
+6. Run <br>
     <code>./build/src/perm_tree</code>
 
 ## How to test

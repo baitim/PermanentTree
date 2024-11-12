@@ -1,6 +1,15 @@
 #include "perm_tree.hpp"
 #include <gtest/gtest.h>
 
+void is_list_eq_vector(std::list<int> l, std::vector<int> v) {
+    ASSERT_EQ(l.size(), v.size());
+
+    for (int i = 0, end = l.size(); i < end; ++i) {
+        EXPECT_EQ(l.front(), v[i]) << " at index: " << i << "\n";
+        l.pop_front();
+    }
+}
+
 TEST(Perm_tree_main, test_simple)
 {
     perm_tree::perm_tree_t<int> tree;
@@ -10,6 +19,32 @@ TEST(Perm_tree_main, test_simple)
     tree.insert(30);
     tree.insert(40);
     ASSERT_EQ(tree.detach_insert(5).size(), 2);
+}
+
+TEST(Perm_tree_main, test_main)
+{
+    perm_tree::perm_tree_t<int> tree;
+    std::list<int> ans;
+
+    tree.insert(4);
+    tree.insert(3);
+    tree.insert(8);
+    tree.insert(2);
+    tree.insert(7);
+    tree.insert(10);
+
+    ans = tree.detach_insert(5);
+    is_list_eq_vector(ans, {4, 8, 7});
+
+    tree.reset();
+
+    ans = tree.detach_insert(5);
+    is_list_eq_vector(ans, {4, 8, 7});
+
+    tree.insert(6);
+
+    ans = tree.detach_insert(9);
+    is_list_eq_vector(ans, {4, 8, 10});
 }
 
 TEST(Perm_tree_main, test_copy_ctor)
