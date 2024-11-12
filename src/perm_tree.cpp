@@ -1,9 +1,8 @@
 #include "perm_tree.hpp"
-#include <cstdint>
 
 int main()
 {
-    perm_tree::perm_tree_t<int> tree{INT32_MAX};;
+    perm_tree::perm_tree_t<int> tree;
 
     char command;
     while(std::cin >> command) {

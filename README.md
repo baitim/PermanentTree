@@ -17,11 +17,21 @@
 2. Go to folder <br>
     <code>cd PermanentTree</code>
 
-3. Build <br>
+3. Init submodules <br>
+    <code>git submodule update --init --recursive</code>
+
+4. Build <br>
     <code>cmake . -B build ; cmake --build build</code>
 
-4. Run <br>
-    <code>./build/src/perm_tree</code> in terminal <br>
+5. Run <br>
+    <code>./build/src/perm_tree</code>
+
+## How to test
+
+* Testing
+    - End to end & Unit<br>
+        <code>ctest --test-dir build --output-on-failure</code>
+
 
 <p align="center"><img src="https://github.com/baitim/PermanentTree/blob/main/images/cat.gif" width="40%"></p>
 

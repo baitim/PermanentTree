@@ -57,8 +57,6 @@ namespace perm_tree {
                 return *this;
             }
 
-            pointer get_ptr() { return node_; }
-
             bool is_valid() const noexcept { return (node_ != nullptr); }
 
             reference operator*() {
@@ -156,7 +154,6 @@ namespace perm_tree {
         tree_nodes_buffer_t buffer_;
         tree_node* root_;
         std::unique_ptr<tree_node> node_detached_;
-        const KeyT max_key_;
 
     private:
         int get_node_size(internal_iterator node) const noexcept {
@@ -207,7 +204,7 @@ namespace perm_tree {
 
                 if (left_height < right_height)
                     rotate_left(node->left_);
-                rotate_right(node.get_ptr());
+                rotate_right(std::addressof(*node));
                     
             } else if (balance_diff < -1) {
                 tree_node* right = node->right_;
@@ -219,7 +216,7 @@ namespace perm_tree {
 
                 if (left_height > right_height)
                     rotate_right(node->right_);
-                rotate_left(node.get_ptr());
+                rotate_left(std::addressof(*node));
             }
         }
 
@@ -364,7 +361,74 @@ namespace perm_tree {
         }
 
     public:
-        perm_tree_t(const KeyT& max_key) : max_key_(max_key) {}
+        perm_tree_t() {}
+
+        perm_tree_t(const perm_tree_t<KeyT, CompT>& other) {
+            internal_iterator curr_other = other.root_;
+            if (!curr_other.is_valid())
+                return;
+
+            root_ = buffer_.add_node(other.root_->key_);
+            internal_iterator curr_this = root_;
+
+            while (curr_other.is_valid()) {
+
+                if (curr_other->left_ && !curr_this->left_) {
+                    curr_other       = curr_other->left_;
+                    curr_this->left_ = buffer_.add_node(curr_other->key_);
+                    curr_this->left_->parent_ = std::addressof(*curr_this);
+                    curr_this        = curr_this->left_;
+
+                } else if (curr_other->right_ && !curr_this->right_) {
+                    curr_other        = curr_other->right_;
+                    curr_this->right_ = buffer_.add_node(curr_other->key_);
+                    curr_this->right_->parent_ = std::addressof(*curr_this);
+                    curr_this         = curr_this->right_;
+
+                } else {
+                    if (curr_other->parent_) {
+                        update_height (curr_this);
+                        update_Nchilds(curr_this);
+                        curr_other = curr_other->parent_;
+                        curr_this  = curr_this->parent_;
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
+
+        perm_tree_t<KeyT, CompT>& operator=(const perm_tree_t<KeyT, CompT>& other) {
+            if (this == &other)
+                return *this;
+
+            perm_tree_t<KeyT, CompT> new_tree{other};
+            is_detached_   = std::move(new_tree.is_detached_);
+            buffer_        = std::move(new_tree.buffer_);
+            root_          = std::move(new_tree.root_);
+            node_detached_ = std::move(new_tree.node_detached_);
+            return *this;
+        }
+
+        perm_tree_t(perm_tree_t<KeyT, CompT>&& other) noexcept :
+            is_detached_    (std::move(other.is_detached_)),
+            buffer_         (std::move(other.buffer_)),
+            root_           (std::move(other.root_)),
+            node_detached_  (std::move(other.node_detached_)) {
+
+            other.root_ = nullptr;
+        }
+        
+        perm_tree_t& operator=(perm_tree_t<KeyT, CompT>&& other) noexcept {
+            if (this == &other)
+                return *this;
+
+            std::swap(is_detached_,   other.is_detached_);
+            std::swap(buffer_,        other.buffer_);
+            std::swap(root_,          other.root_);
+            std::swap(node_detached_, other.node_detached_);
+            return *this;
+        }
 
         std::ostream& print(std::ostream& os) const {
             if (!root_)
@@ -463,7 +527,7 @@ namespace perm_tree {
             reset();
         }
 
-        void reset() {
+        void reset() noexcept {
             is_detached_ = false;
             node_detached_.reset();
         }
