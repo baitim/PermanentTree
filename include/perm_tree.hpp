@@ -185,8 +185,8 @@ namespace perm_tree {
             }
         }
 
-        void balance(tree_node* node) {
-            if (!node)
+        void balance(internal_iterator node) {
+            if (!node.is_valid())
                 return;
 
             int balance_diff = 0;
@@ -207,7 +207,7 @@ namespace perm_tree {
 
                 if (left_height < right_height)
                     rotate_left(node->left_);
-                rotate_right(node);
+                rotate_right(node.get_ptr());
                     
             } else if (balance_diff < -1) {
                 tree_node* right = node->right_;
@@ -219,7 +219,7 @@ namespace perm_tree {
 
                 if (left_height > right_height)
                     rotate_right(node->right_);
-                rotate_left(node);
+                rotate_left(node.get_ptr());
             }
         }
 
@@ -427,10 +427,32 @@ namespace perm_tree {
             return find(destination->key_);
         }
 
-        void detach_insert(const KeyT& key) {
+        std::list<KeyT> detach_insert(const KeyT& key) {
             attach();
             is_detached_ = true;
+
+            std::list<KeyT> path;
+            internal_iterator current = root_;
+            while (current.is_valid()) {
+                if (CompT()(key, current->key_)) {
+                    path.push_back(current->key_);
+                    if (current->left_)
+                        current = current->left_;
+                    else
+                        break;
+                } else if (CompT()(current->key_, key)) {
+                    path.push_back(current->key_);
+                    if (current->right_)
+                        current = current->right_;
+                    else
+                        break;
+                } else {
+                    break;
+                }
+            }
+
             node_detached_ = std::make_unique<tree_node>(key);
+            return path;
         }
 
         void attach() {
@@ -441,6 +463,7 @@ namespace perm_tree {
         }
 
         void reset() {
+            is_detached_ = false;
             node_detached_.reset();
         }
     };

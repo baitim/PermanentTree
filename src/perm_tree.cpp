@@ -12,6 +12,7 @@ int main()
 
         int  key;
         char detach_command;
+        std::list<int> detached_keys;
         switch (command) {
             case 'k':
                 std::cin >> key;
@@ -30,7 +31,9 @@ int main()
                 if (!std::cin.good())
                     return (std::cout << print_red("Error input, need key as int\n"), 1);
                 
-                tree.detach_insert(key);
+                detached_keys = tree.detach_insert(key);
+                for (auto i : detached_keys)
+                    std::cout << i << " ";
                 break;
 
             case 'r':
@@ -41,7 +44,7 @@ int main()
                 return (std::cout << print_red("Error input, need command: \"k\", \"s\" or \"r\"\n"), 1);
         }
 
-#if 1
+#ifdef DEBUG
         std::cout << tree << "\n";
 #endif
     }
