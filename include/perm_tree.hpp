@@ -422,7 +422,7 @@ namespace perm_tree {
             update_Nchilds(destination);
 
             for (auto& node_ : ascending_range{destination})
-                balance(std::addressof(node_));
+                balance(node_);
 
             return find(destination->key_);
         }
@@ -456,10 +456,11 @@ namespace perm_tree {
         }
 
         void attach() {
-            if (std::exchange(is_detached_, false)) {
-                insert(node_detached_.get()->key_);
-                reset();
-            }
+            if (!std::exchange(is_detached_, false))
+                return;
+            
+            insert(node_detached_.get()->key_);
+            reset();
         }
 
         void reset() {
