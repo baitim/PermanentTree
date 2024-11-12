@@ -18,10 +18,10 @@
     <code>cd PermanentTree</code>
 
 3. Prepare conan <br>
-    write <code>conan profile detect --force</code> in terminal
+    <code>conan profile detect --force</code>
 
 4. Init dependencies <br>
-    write <code>conan install . --build=missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True -s compiler.cppstd=gnu20</code> in terminal <br>
+    <code>conan install . --build=missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True -s compiler.cppstd=gnu20</code> <br>
     maybe you will need these flags for the conan <code>-s build_type=Debug</code>
 
 5. Build <br>
