@@ -1,12 +1,13 @@
 #include "perm_tree.hpp"
 #include <gtest/gtest.h>
 
-void is_list_eq_vector(std::list<int> l, std::vector<int> v) {
+void is_list_eq_vector(const std::list<int>& l, const std::vector<int>& v) {
     ASSERT_EQ(l.size(), v.size());
 
-    for (int i = 0, end = l.size(); i < end; ++i) {
-        EXPECT_EQ(l.front(), v[i]) << " at index: " << i << "\n";
-        l.pop_front();
+    int i = 0;
+    for (auto l_it : l) {
+        EXPECT_EQ(l_it, v[i]) << " at index: " << i << "\n";
+        ++i;
     }
 }
 
