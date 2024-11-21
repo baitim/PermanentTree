@@ -11,18 +11,17 @@ namespace perm_tree {
         using internal_iterator   = typename avl_tree_t<KeyT, CompT>::internal_iterator;
         using tree_node           = typename avl_tree_t<KeyT, CompT>::tree_node;
 
-        using avl_tree_t<KeyT, CompT>::root_;
-
         avl_tree_t<KeyT, CompT>::tree_nodes_buffer_t branch_buffer_;
         tree_node* new_root_ = nullptr;
 
     private:
         std::list<KeyT> insert2new(const KeyT& key) {
             std::list<KeyT> path;
-            if (!root_)
+            const tree_node* main_root = avl_tree_t<KeyT, CompT>::get_root();
+            if (!main_root)
                 return path;
 
-            new_root_ = branch_buffer_.add_node(root_);
+            new_root_ = branch_buffer_.add_node(main_root);
 
             internal_iterator current     = *new_root_;
             internal_iterator destination = *new_root_;

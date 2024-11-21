@@ -116,7 +116,7 @@ namespace avl_tree {
             internal_iterator end  () const { return internal_iterator{nullptr}; }
         };
 
-    protected:
+    private:
         tree_nodes_buffer_t buffer_;
         tree_node* root_ = nullptr;
 
@@ -494,6 +494,8 @@ namespace avl_tree {
 
             return find(destination->key_);
         }
+
+        const tree_node* get_root() const { return const_cast<const tree_node*>(root_); }
 
         virtual ~avl_tree_t() {}
     };
