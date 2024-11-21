@@ -26,10 +26,12 @@ namespace perm_tree {
             internal_iterator current     = *new_root_;
             internal_iterator destination = *new_root_;
             while (current.is_valid()) {
+                internal_iterator current_copy = current;
                 if (CompT()(key, current->key_)) {
                     path.push_back(current->key_);
                     if (current->left_) {
                         current = branch_buffer_.add_node(current->left_);
+                        current->parent_ = std::addressof(*current_copy);
                     } else {
                         current->left_ = branch_buffer_.add_node(key);
                         current->left_->parent_ = std::addressof(*current);
@@ -40,6 +42,7 @@ namespace perm_tree {
                     path.push_back(current->key_);
                     if (current->right_) {
                         current = branch_buffer_.add_node(current->right_);
+                        current->parent_ = std::addressof(*current_copy);
                     } else {
                         current->right_ = branch_buffer_.add_node(key);
                         current->right_->parent_ = std::addressof(*current);
