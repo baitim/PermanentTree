@@ -51,8 +51,11 @@ namespace perm_tree {
                 }
             }
 
+            avl_tree_t<KeyT, CompT>::update_height (destination);
+            avl_tree_t<KeyT, CompT>::update_Nchilds(destination);
+
             for (auto& node : ascending_range{destination})
-                avl_tree_t<KeyT, CompT>::balance(node);
+                avl_tree_t<KeyT, CompT>::balance(node, new_root_);
 
             return path;
         }

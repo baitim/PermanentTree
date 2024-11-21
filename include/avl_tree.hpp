@@ -48,7 +48,7 @@ namespace avl_tree {
                 std::cout << "\n";
             }
 
-            void clear() {
+            void clear() noexcept {
                 nodes_.clear();
             }
 
@@ -174,33 +174,7 @@ namespace avl_tree {
         };
 
     private:
-        int get_node_size(internal_iterator node) const noexcept {
-            if (!node.is_valid())
-                return 0;
-
-            return node->Nleft_ + node->Nright_ + 1;
-        }
-
-        void update_Nchilds(internal_iterator node) {
-            for (auto& node_ : ascending_range{node}) {
-                node_.Nleft_  = get_node_size(node_.left_);
-                node_.Nright_ = get_node_size(node_.right_);
-            }
-        }
-
-        void update_height(internal_iterator node) {
-            for (auto& node_ : ascending_range{node}) {
-                node_.height_ = 0;
-                if (node_.left_)
-                    node_.height_ = node_.left_->height_;
-                if (node_.right_)
-                    node_.height_ = std::max(node_.height_, node_.right_->height_);
-
-                node_.height_++;
-            }
-        }
-
-        void rotate_right(tree_node* node) {
+        static void rotate_right(tree_node* node, tree_node*& root) {
             if (!node)
                 return;
 
@@ -209,8 +183,8 @@ namespace avl_tree {
             node->left_ = node->left_->right_;
             node_left_old->right_ = node;
 
-            if (node == root_) {
-                root_ = node_left_old;
+            if (node == root) {
+                root = node_left_old;
             } else {
                 if (CompT()(node->key_, node->parent_->key_))
                     node->parent_->left_  = node_left_old;
@@ -227,7 +201,7 @@ namespace avl_tree {
             update_Nchilds(node);
         }
 
-        void rotate_left(tree_node* node) {
+        static void rotate_left(tree_node* node, tree_node*& root) {
             if (!node)
                 return;
 
@@ -236,8 +210,8 @@ namespace avl_tree {
             node->right_ = node->right_->left_;
             node_right_old->left_ = node;
 
-            if (node == root_) {
-                root_ = node_right_old;
+            if (node == root) {
+                root = node_right_old;
             } else {
                 if (CompT()(node->key_, node->parent_->key_))
                     node->parent_->left_  = node_right_old;
@@ -304,7 +278,33 @@ namespace avl_tree {
         }
 
     protected:
-        void balance(internal_iterator node) {
+        static int get_node_size(internal_iterator node) noexcept {
+            if (!node.is_valid())
+                return 0;
+
+            return node->Nleft_ + node->Nright_ + 1;
+        }
+
+        static void update_Nchilds(internal_iterator node) {
+            for (auto& node_ : ascending_range{node}) {
+                node_.Nleft_  = get_node_size(node_.left_);
+                node_.Nright_ = get_node_size(node_.right_);
+            }
+        }
+
+        static void update_height(internal_iterator node) {
+            for (auto& node_ : ascending_range{node}) {
+                node_.height_ = 0;
+                if (node_.left_)
+                    node_.height_ = node_.left_->height_;
+                if (node_.right_)
+                    node_.height_ = std::max(node_.height_, node_.right_->height_);
+
+                node_.height_++;
+            }
+        }
+
+        static void balance(internal_iterator node, tree_node*& root) {
             if (!node.is_valid())
                 return;
 
@@ -325,8 +325,8 @@ namespace avl_tree {
                     right_height = left->right_->height_;
 
                 if (left_height < right_height)
-                    rotate_left(node->left_);
-                rotate_right(std::addressof(*node));
+                    rotate_left(node->left_, root);
+                rotate_right(std::addressof(*node), root);
                     
             } else if (balance_diff < -1) {
                 tree_node* right = node->right_;
@@ -337,8 +337,8 @@ namespace avl_tree {
                     right_height = right->right_->height_;
 
                 if (left_height > right_height)
-                    rotate_right(node->right_);
-                rotate_left(std::addressof(*node));
+                    rotate_right(node->right_, root);
+                rotate_left(std::addressof(*node), root);
             }
         }
 
@@ -490,7 +490,7 @@ namespace avl_tree {
             update_Nchilds(destination);
 
             for (auto& node_ : ascending_range{destination})
-                balance(node_);
+                balance(node_, root_);
 
             return find(destination->key_);
         }
