@@ -190,7 +190,7 @@ namespace perm_tree {
             reset();
         }
 
-        void reset() noexcept {
+        void reset() {
             switch2old();
             branch_buffer_.clear();
             new_root_ = nullptr;
