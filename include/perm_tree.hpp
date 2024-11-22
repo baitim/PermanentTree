@@ -108,10 +108,19 @@ namespace perm_tree {
             tree_node* current = nullptr;
             for (auto it = nodes.begin(), end = nodes.end(); it != end; ++it) {
                 current = branch_buffer_.add_node(it->get());
+                tree_node* node = buffer_.get_node(it->get()->key_);
+
                 current->parent_ = parent;
                 parent = current;
+
+                if (!node)
+                    continue;
+
+                current->left_  = node->left_;
+                current->right_ = node->right_;
             }
-            new_root_ = buffer_.front_ptr();
+            new_root_ = branch_buffer_.front_ptr();
+            branch_buffer_.print();
         }
 
         perm_tree_t<KeyT, CompT>& operator=(const perm_tree_t<KeyT, CompT>& other) {
@@ -155,7 +164,8 @@ namespace perm_tree {
             os << "\n\n";
             os << print_lblue("Detached tree with root = " << copy.new_root_->key_ <<
                               "(" << copy.new_root_ << ")" <<
-                              ":\nkey(<child>, <child>, <parent>, <Nleft>, <Nright>, <height>, <ptr>):\n");
+                              ":\nkey(<child>, <child>, <parent>, <Nleft>, <Nright>,"
+                                     "<height>, <ptr>, <parent ptr>):\n");
 
             copy.avl_tree_t<KeyT, CompT>::print_subtree(os, new_root_);
             return os;

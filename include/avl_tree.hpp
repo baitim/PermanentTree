@@ -26,7 +26,7 @@ namespace avl_tree {
             tree_node(const tree_node* node) : key_  (node->key_), left_(node->left_),
                                                right_(node->right_) {}
 
-            std::ostream& print_node(std::ostream& os) const {
+            std::ostream& print(std::ostream& os = std::cerr) const {
                 os << print_lcyan(key_ << "\t(");
 
                 if (left_)
@@ -89,7 +89,7 @@ namespace avl_tree {
             std::ostream& print(std::ostream& os = std::cerr) const {
                 os << print_lblue("tree_nodes_buffer_t(" << nodes_.size() << "):\n");
                 for (auto it = nodes_.begin(), end = nodes_.end(); it != end; ++it) {
-                    it->get()->print_node(os);
+                    it->get()->print(os);
                     os << "\n";
                 }
                 os << "\n";
@@ -386,7 +386,7 @@ namespace avl_tree {
                 }
 
                 if (!used[current_index] && current.is_valid())
-                    current->print_node(os);
+                    current->print(os);
                 used[current_index] = true;
 
                 internal_iterator right_it = current->right_;
@@ -469,7 +469,7 @@ namespace avl_tree {
             if (!root_)
                 return os;
 
-            os << print_lblue("Permanent tree with root = " << root_->key_ << "(" << root_ << ")" <<
+            os << print_lblue("AVL tree with root = " << root_->key_ << "(" << root_ << ")" <<
                               ":\nkey(<child>, <child>, <parent>, <Nleft>, <Nright>,"
                                      "<height>, <ptr>, <parent ptr>):\n");
 

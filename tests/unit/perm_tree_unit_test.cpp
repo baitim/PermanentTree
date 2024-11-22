@@ -61,6 +61,21 @@ TEST(Perm_tree_main, test_copy_ctor)
     EXPECT_EQ(tree.detach_insert( 6 ).size(), 3);
 }
 
+TEST(Perm_tree_main, test_copy_ctor2)
+{   
+    perm_tree::perm_tree_t<int> tree2;
+    for (int i = 0; i < 10; i++) 
+        tree2.insert(i);
+    tree2.detach_insert(-1);
+
+    perm_tree::perm_tree_t<int> tree{tree2};
+    tree.insert(-2);
+
+    EXPECT_EQ(tree.detach_insert(-3 ).size(), 4);
+    EXPECT_EQ(tree.detach_insert( 15).size(), 4);
+    EXPECT_EQ(tree.detach_insert( 6 ).size(), 3);
+}
+
 TEST(Perm_tree_raii, test_assign_ctor)
 {
     perm_tree::perm_tree_t<int> tree;
