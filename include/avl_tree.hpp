@@ -101,8 +101,10 @@ namespace avl_tree {
                 map_.clear();
             }
 
+            tree_node*    front_ptr() { return  nodes_.front().get(); }
             tree_node&    back_node() { return *nodes_.back(); }
             list_nodes_t& get_nodes() { return nodes_; }
+            const list_nodes_t& get_nodes() const { return nodes_; }
         };
 
         class internal_iterator final {

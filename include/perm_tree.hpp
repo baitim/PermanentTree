@@ -98,38 +98,20 @@ namespace perm_tree {
         perm_tree_t(const perm_tree_t<KeyT, CompT>& other) :
             avl_tree_t<KeyT, CompT>(static_cast<const avl_tree_t<KeyT, CompT>&>(other))
         {
-            // internal_iterator curr_other = other.root_;
-            // if (!curr_other.is_valid())
-            //     return;
+            if (!other.new_root_)
+                return;
 
-            // root_ = buffer_.add_node(other.root_->key_);
-            // internal_iterator curr_this = root_;
+            reset();
 
-            // while (curr_other.is_valid()) {
-
-            //     if (curr_other->left_ && !curr_this->left_) {
-            //         curr_other       = curr_other->left_;
-            //         curr_this->left_ = buffer_.add_node(curr_other->key_);
-            //         curr_this->left_->parent_ = std::addressof(*curr_this);
-            //         curr_this        = curr_this->left_;
-
-            //     } else if (curr_other->right_ && !curr_this->right_) {
-            //         curr_other        = curr_other->right_;
-            //         curr_this->right_ = buffer_.add_node(curr_other->key_);
-            //         curr_this->right_->parent_ = std::addressof(*curr_this);
-            //         curr_this         = curr_this->right_;
-
-            //     } else {
-            //         if (curr_other->parent_) {
-            //             update_height (curr_this);
-            //             update_Nchilds(curr_this);
-            //             curr_other = curr_other->parent_;
-            //             curr_this  = curr_this->parent_;
-            //         } else {
-            //             break;
-            //         }
-            //     }
-            // }
+            const list_nodes_t& nodes = other.branch_buffer_.get_nodes();
+            tree_node* parent  = nullptr;
+            tree_node* current = nullptr;
+            for (auto it = nodes.begin(), end = nodes.end(); it != end; ++it) {
+                current = branch_buffer_.add_node(it->get());
+                current->parent_ = parent;
+                parent = current;
+            }
+            new_root_ = buffer_.front_ptr();
         }
 
         perm_tree_t<KeyT, CompT>& operator=(const perm_tree_t<KeyT, CompT>& other) {
@@ -160,22 +142,22 @@ namespace perm_tree {
             return *this;
         }
         
-        std::ostream& print(std::ostream& os = std::cerr) {
-            // perm_tree_t<KeyT, CompT> copy{*this};
+        std::ostream& print(std::ostream& os = std::cerr) const {
+            perm_tree_t<KeyT, CompT> copy{*this};
 
-            this->switch2old();
-            this->avl_tree_t<KeyT, CompT>::print(os);
+            copy.switch2old();
+            copy.avl_tree_t<KeyT, CompT>::print(os);
 
-            if (!this->new_root_)
+            if (!copy.new_root_)
                 return os;
 
-            this->switch2new();
+            copy.switch2new();
             os << "\n\n";
-            os << print_lblue("Detached tree with root = " << this->new_root_->key_ <<
-                              "(" << this->new_root_ << ")" <<
+            os << print_lblue("Detached tree with root = " << copy.new_root_->key_ <<
+                              "(" << copy.new_root_ << ")" <<
                               ":\nkey(<child>, <child>, <parent>, <Nleft>, <Nright>, <height>, <ptr>):\n");
 
-            this->avl_tree_t<KeyT, CompT>::print_subtree(os, new_root_);
+            copy.avl_tree_t<KeyT, CompT>::print_subtree(os, new_root_);
             return os;
         }
 
@@ -206,7 +188,7 @@ namespace perm_tree {
     };
 
     template <typename KeyT, typename CompT>
-    std::ostream& operator<<(std::ostream& os, perm_tree_t<KeyT, CompT>& perm_tree) {
+    std::ostream& operator<<(std::ostream& os, const perm_tree_t<KeyT, CompT>& perm_tree) {
         return perm_tree.print(os);
     }
 }
