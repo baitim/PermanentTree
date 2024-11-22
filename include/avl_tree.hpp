@@ -6,6 +6,7 @@
 #include <cmath>
 #include <memory>
 #include <vector>
+#include <unordered_map>
 
 namespace avl_tree {
     
@@ -22,39 +23,86 @@ namespace avl_tree {
             tree_node* right_  = nullptr;
 
             tree_node(const KeyT& key) : key_(key) {}
-            tree_node(const tree_node* node) : key_   (node->key_),    height_(node->height_),
-                                               Nleft_ (node->Nleft_),  Nright_(node->Nright_),
-                                               parent_(node->parent_), left_  (node->left_),
-                                               right_ (node->right_) {}
+            tree_node(const tree_node* node) : key_  (node->key_), left_(node->left_),
+                                               right_(node->right_) {}
+
+            std::ostream& print_node(std::ostream& os) const {
+                os << print_lcyan(key_ << "\t(");
+
+                if (left_)
+                    os << print_lcyan(left_->key_ << ",\t");
+                else
+                    os << print_lcyan("none" << ",\t");
+
+                if (right_)
+                    os << print_lcyan(right_->key_ << ",\t");
+                else
+                    os << print_lcyan("none" << ",\t");
+
+                if (parent_)
+                    os << print_lcyan(parent_->key_ << ",\t");
+                else
+                    os << print_lcyan("none" << ",\t");
+
+                os << print_lcyan(Nleft_  << ",\t" << Nright_ << ",\t" <<
+                                  height_ << ",\t" << this    << ",\t" <<
+                                  parent_ << ")\n");
+                return os;
+            }
         };
 
         class tree_nodes_buffer_t final {
-            std::list<tree_node> nodes_;
+        public:
+            using list_nodes_t = typename std::list<std::unique_ptr<tree_node>>;
+            using nodes_iter   = typename list_nodes_t::iterator;
+        
+        private:
+            list_nodes_t nodes_;
+            std::unordered_map<KeyT, nodes_iter> map_;
 
         public:
             tree_node* add_node(const KeyT& key) {
-                return std::addressof(nodes_.emplace_back(key));
+                nodes_.emplace_back(std::make_unique<tree_node>(key));
+                auto iter = std::prev(nodes_.end());
+                map_.emplace(key, iter);
+                return iter->get();
             }
 
             tree_node* add_node(const tree_node* node) {
-                if (!node)
+                if (node == nullptr)
                     return nullptr;
-                return std::addressof(nodes_.emplace_back(node));
+
+                nodes_.emplace_back(std::make_unique<tree_node>(node));
+                auto iter = std::prev(nodes_.end());
+                map_.emplace(node->key_, iter);
+                return iter->get();
             }
 
-            void print() {
-                for (auto it : nodes_)
-                    std::cout << it.key_ << "\n";
-                std::cout << "\n";
+            tree_node* get_node(const KeyT& key) {
+                auto iter = map_.find(key);
+                if (iter == map_.end())
+                    return nullptr;
+
+                return iter->second->get();
+            }
+
+            std::ostream& print(std::ostream& os = std::cerr) const {
+                os << print_lblue("tree_nodes_buffer_t(" << nodes_.size() << "):\n");
+                for (auto it = nodes_.begin(), end = nodes_.end(); it != end; ++it) {
+                    it->get()->print_node(os);
+                    os << "\n";
+                }
+                os << "\n";
+                return os;
             }
 
             void clear() noexcept {
                 nodes_.clear();
+                map_.clear();
             }
 
-            tree_node& back() {
-                return nodes_.back();
-            }
+            tree_node&    back_node() { return *nodes_.back(); }
+            list_nodes_t& get_nodes() { return nodes_; }
         };
 
         class internal_iterator final {
@@ -116,7 +164,7 @@ namespace avl_tree {
             internal_iterator end  () const { return internal_iterator{nullptr}; }
         };
 
-    private:
+    protected:
         tree_nodes_buffer_t buffer_;
         tree_node* root_ = nullptr;
 
@@ -228,32 +276,6 @@ namespace avl_tree {
             update_Nchilds(node);
         }
 
-        std::ostream& print_node(std::ostream& os, internal_iterator node) const noexcept {
-            if (!node.is_valid())
-                return os;
-
-            os << print_lcyan(node->key_ << "\t(");
-
-            if (node->left_)
-                os << print_lcyan(node->left_->key_ << ",\t");
-            else
-                os << print_lcyan("none" << ",\t");
-
-            if (node->right_)
-                os << print_lcyan(node->right_->key_ << ",\t");
-            else
-                os << print_lcyan("none" << ",\t");
-
-            if (node->parent_)
-                os << print_lcyan(node->parent_->key_ << ",\t");
-            else
-                os << print_lcyan("none" << ",\t");
-
-            os << print_lcyan(node->Nleft_  << ",\t" << node->Nright_ << ",\t" <<
-                              node->height_ << ",\t" << std::addressof(*node) << ")\n");
-            return os;
-        }
-
         internal_iterator find(const KeyT& key) const {
             if (!root_)
                 return 0;
@@ -361,8 +383,8 @@ namespace avl_tree {
                     continue;
                 }
 
-                if (!used[current_index])
-                    print_node(os, current);
+                if (!used[current_index] && current.is_valid())
+                    current->print_node(os);
                 used[current_index] = true;
 
                 internal_iterator right_it = current->right_;
@@ -441,12 +463,13 @@ namespace avl_tree {
             return *this;
         }
 
-        std::ostream& print(std::ostream& os) const {
+        std::ostream& print(std::ostream& os = std::cerr) const {
             if (!root_)
                 return os;
 
-            os << print_lblue("Permanent tree with root = " << root_->key_ <<
-                            ":\nkey(<child>, <child>, <parent>, <Nleft>, <Nright>, <height>, <ptr>):\n");
+            os << print_lblue("Permanent tree with root = " << root_->key_ << "(" << root_ << ")" <<
+                              ":\nkey(<child>, <child>, <parent>, <Nleft>, <Nright>,"
+                                     "<height>, <ptr>, <parent ptr>):\n");
 
             print_subtree(os, root_);
             return os;
@@ -460,8 +483,8 @@ namespace avl_tree {
                 return root_;
             }
 
-            internal_iterator current     = *root_;
-            internal_iterator destination = *root_;
+            internal_iterator current     = root_;
+            internal_iterator destination = root_;
             while (current.is_valid()) {
                 if (CompT()(key, current->key_)) {
                     if (current->left_) {
