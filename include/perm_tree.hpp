@@ -152,22 +152,20 @@ namespace perm_tree {
         }
         
         std::ostream& print(std::ostream& os = std::cerr) const {
-            perm_tree_t<KeyT, CompT> copy{*this};
+            switch2old();
+            avl_tree_t<KeyT, CompT>::print(os);
 
-            copy.switch2old();
-            copy.avl_tree_t<KeyT, CompT>::print(os);
-
-            if (!copy.new_root_)
+            if (!new_root_)
                 return os;
 
-            copy.switch2new();
+            switch2new();
             os << "\n\n";
-            os << print_lblue("Detached tree with root = " << copy.new_root_->key_ <<
-                              "(" << copy.new_root_ << ")" <<
+            os << print_lblue("Detached tree with root = " << new_root_->key_ <<
+                              "(" << new_root_ << ")" <<
                               ":\nkey(<child>, <child>, <parent>, <Nleft>, <Nright>,"
                                      "<height>, <ptr>, <parent ptr>):\n");
 
-            copy.avl_tree_t<KeyT, CompT>::print_subtree(os, new_root_);
+            avl_tree_t<KeyT, CompT>::print_subtree(os, new_root_);
             return os;
         }
 
