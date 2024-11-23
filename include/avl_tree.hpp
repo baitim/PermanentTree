@@ -278,29 +278,6 @@ namespace avl_tree {
             update_Nchilds(node);
         }
 
-        internal_iterator find(const KeyT& key) const {
-            if (!root_)
-                return 0;
-
-            internal_iterator current = root_;
-            while (current.is_valid()) {
-                if (CompT()(key, current->key_)) {
-                    if (current->left_)
-                        current = current->left_;
-                    else
-                        return current;
-                } else if (CompT()(current->key_, key)) {
-                    if (current->right_)
-                        current = current->right_;
-                    else
-                        return current;
-                } else {
-                    return current;
-                }
-            }
-            return root_;
-        }
-
     protected:
         static int get_node_size(internal_iterator node) noexcept {
             if (!node.is_valid())
@@ -517,7 +494,7 @@ namespace avl_tree {
             for (auto& node_ : ascending_range{destination})
                 balance(node_, root_);
 
-            return find(destination->key_);
+            return buffer_.get_node(destination->key_);
         }
 
         const tree_node* get_root() const { return const_cast<const tree_node*>(root_); }
